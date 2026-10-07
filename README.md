@@ -16,22 +16,12 @@ The electrical team is responsible for the systems that connect the test article
 
 ## System architecture
 
-```mermaid
-flowchart LR
-    S["Test article and facility sensors"] --> A["Analog and thermocouple inputs"]
-    A --> D["NI CompactDAQ"]
-    D --> C["Control-room computer"]
-    C --> R["TDMS test record and CSV export"]
+The preliminary design uses a modular **National Instruments CompactDAQ** platform. The selected concept provides analog inputs for pressure, thrust, and safety instrumentation; cold-junction-compensated thermocouple inputs; and digital outputs for valve control. A spare chassis module allows future expansion.
 
-    C --> O["Digital outputs"]
-    O --> I["Relay and isolation interface"]
-    I --> V["24 V solenoid valves"]
-
-    E["E-stop and safety sensors"] --> D
-    E --> I
-```
-
-The preliminary design uses a modular **National Instruments CompactDAQ** platform. The selected concept provides analog inputs for pressure, thrust, and safety instrumentation; cold-junction-compensated thermocouple inputs; and digital outputs for valve control. A spare chassis position allows future expansion.
+The modules include:
+- NI 9213 16 input Thermocouple Module
+- NI 9205 32 input Analog Voltage Module
+- NI 9476 32 output Digital Output Module
 
 ## Preliminary I/O baseline
 
@@ -75,10 +65,6 @@ The thrust channel uses a compression load cell and bridge measurement. The fina
 
 The DAQ commands fluid-system solenoids through a relay interface. The valves use an independent, isolated 24 V supply because the DAQ cannot provide the required actuator current. The preliminary firing case assumes up to four general-purpose valves and four smaller valves operating simultaneously, for an estimated peak draw of 4.8 A.
 
-### Field connections
-
-A BNC bulkhead panel provides a maintainable boundary between field wiring and the DAQ. The metal panel and coaxial connections improve electromagnetic shielding, establish a controlled ground reference, reduce exposed wiring, and make sensor replacement and troubleshooting easier.
-
 ## Safety integration
 
 The electrical system will monitor facility hazards and support an automatic safe state. Planned inputs include:
@@ -92,25 +78,9 @@ The electrical system will monitor facility hazards and support an automatic saf
 
 Safety logic must terminate ignition and propellant flow when an emergency stop is activated or when approved trip conditions occur. The detailed interlock architecture, reset behavior, fault handling, and independent layers of protection require formal review before implementation.
 
-## Open design decisions
-
-The source presentations identify several items that remain unresolved:
-
-- Select and document the control-software baseline. The current material references both Python and LabVIEW.
-- Confirm whether the test article requires two or four pressure transducers.
-- Complete the load-cell trade study and validate excitation, bridge, overload, and off-axis-load requirements.
-- Finalize the BNC bulkhead channel count, panel dimensions, grounding plan, and enclosure layout.
-- Obtain final quotations for test-article pressure transducers and the accelerometer.
-- Complete the facility electrical load analysis and coordinate normal, backup, and emergency power.
-- Define and review the complete cause-and-effect matrix for alarms, interlocks, and emergency shutdown.
-
-## Design status
-
-This overview reflects the **5 kN testbed PDR dated July 2, 2026** and the **Electrical Component Selection review dated August 7, 2026**. Values and selections should be treated as preliminary until they appear in an approved requirement, drawing, bill of materials, or test procedure.
-
 ## Repository goals
 
-As the design matures, this repository will provide a controlled home for:
+As the design continues through the semester, this repository will contain:
 
 - Electrical architecture and interface documentation
 - I/O maps and wiring definitions
