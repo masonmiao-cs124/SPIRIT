@@ -28,17 +28,14 @@ The modules include:
 | Function | Current baseline |
 | --- | --- |
 | Analog input capacity | 32 channels |
-| Estimated analog inputs in the PDR | 21 channels |
+| Estimated analog inputs | 21 channels |
 | Thermocouple capacity | 16 channels with cold-junction compensation |
-| Estimated digital outputs in the PDR | 14 channels |
+| Estimated digital outputs| 10 channels |
 | Digital output capacity | 32 channels |
 | Fluid-system instrumentation | 12 pressure transducers and 6 thermocouples |
 | Test-article instrumentation | Load cell, 8 thermocouples, accelerometer, and pressure transducers |
-| Data products | Raw TDMS files with CSV export for post-processing |
 
 The DAQ must capture synchronized thrust, pressure, temperature, mass-flow, valve-state, and safety data at rates appropriate for each measurement. The control software will store reusable channel configurations, sensor scaling, calibration data, and test definitions.
-
-## Instrumentation and control
 
 ### Pressure measurement
 
@@ -67,16 +64,7 @@ The DAQ commands fluid-system solenoids through a relay interface. The valves us
 
 ## Safety integration
 
-The electrical system will monitor facility hazards and support an automatic safe state. Planned inputs include:
-
-- Oxygen concentration
-- Lower explosive limit for flammable gases
-- Carbon monoxide
-- UV/IR flame detection
-- Pressure and temperature limit signals
-- Emergency-stop status
-
-Safety logic must terminate ignition and propellant flow when an emergency stop is activated or when approved trip conditions occur. The detailed interlock architecture, reset behavior, fault handling, and independent layers of protection require formal review before implementation.
+TBD
 
 ## Repository goals
 
