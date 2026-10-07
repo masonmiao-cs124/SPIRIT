@@ -1,7 +1,17 @@
 # SPIRIT
 
+## Overview
 
+### Subscale Propulsion Integration, Research, and Instruction Testbed
 
+This repository holds the engineering design workflows for the **Subscale Propulsion Integration, Research, and Instruction Testbed (SPIRIT)** at UIUC.
+
+SPIRIT is a modular rocket-propulsion test facility that supports research and student projects involving solid, hybrid, and liquid rocket engines. The primary engineering scope spans:
+
+* **Structures:** Structures can add their description here :)
+* **Electrical & Data Acquisition:** Instrumentation, signal conditioning, high-speed data acquisition (cDAQ), solenoid valve actuation, real-time control, and mainly test sequencing software.
+
+The current design effort focuses on a **10 kN testbed** that will serve as a proof
 
 ## Electrical and Data Acquisition
 
