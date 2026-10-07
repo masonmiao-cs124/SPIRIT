@@ -8,7 +8,7 @@ This repository holds the engineering design workflows for the **Subscale Propul
 
 SPIRIT is a modular rocket-propulsion test facility that supports research and student projects involving solid, hybrid, and liquid rocket engines. The primary engineering scope spans:
 
-* **Structures:** Structures can add their description here :)
+* **Structures:** Test stand structure CAD frame design. Used for git version control
 * **Electrical & Data Acquisition:** Instrumentation, signal conditioning, high-speed data acquisition (cDAQ), solenoid valve actuation, real-time control, and mainly test sequencing software.
 
 The current design effort focuses on a **10 kN testbed** that will serve as a proof
