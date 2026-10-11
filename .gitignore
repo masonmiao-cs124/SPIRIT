@@ -1,0 +1,6 @@
+# Python's virtual environment and compiled-bytecode cache
+.venv/
+__pycache__/
+
+# Outputs of DAQ runs
+runs/
