@@ -2,7 +2,7 @@
 Load cell (Omega LC103B-3K) live force-vs-time recording on an NI-9205.
 
 Tares at no load, then shows a live graph of force over time while you add
-or remove weights. Saves a CSV of the data and a PNG of the final graph.
+or remove weights. Saves a CSV of the data and a PNG of the final graph into runs/<start time>/.
 
 How to use:
   1. Close the NI MAX Test Panel (only one program can use the module at a time).
@@ -16,6 +16,7 @@ How to use:
 
 import csv
 from datetime import datetime
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import nidaqmx
@@ -39,6 +40,8 @@ FULL_SCALE_V = SENSITIVITY_MV_PER_V / 1000.0 * EXCITATION_V   # 0.030 V at 10 V
 LBF_PER_VOLT = CAPACITY_LBF / FULL_SCALE_V                     # 100,000 lbf/V at 10 V
 BLOCK_TIME = BLOCK_SIZE / SAMPLE_RATE
 SIGN = -1.0 if FLIP_SIGN else 1.0
+RUN_DIR = (Path(__file__).resolve().parents[1] / "runs" / f"{datetime.now():%Y-%m-%d_%H%M%S}")
+RUN_DIR.mkdir(parents=True)
 
 times, volts, forces, markers = [], [], [], []
 
@@ -129,15 +132,13 @@ print(f"Noise in first second (std dev): {first_sec.std():.2f} lbf")
 if markers:
     print("Markers at: " + ", ".join(f"{m:.1f} s" for m in markers))
 
-stamp = f"{datetime.now():%Y%m%d_%H%M%S}"
-
 # ---- Save CSV ----
-csv_name = f"load_cell_time_{stamp}.csv"
-with open(csv_name, "w", newline="") as fh:
+csv_path = RUN_DIR / "load_cell.csv"
+with open(csv_path, "w", newline="") as fh:
     writer = csv.writer(fh)
     writer.writerow(["time_s", "voltage_V", "force_lbf"])
     writer.writerows(zip(times, volts, forces))
-print(f"Saved data to {csv_name}")
+print(f"Saved data to {csv_path}")
 
 # ---- Final graph ----
 plt.ioff()
@@ -159,7 +160,7 @@ ax.set_title(
 )
 fig.tight_layout()
 
-png_name = f"load_cell_time_{stamp}.png"
-fig.savefig(png_name, dpi=150)
-print(f"Saved graph to {png_name}")
+png_path = RUN_DIR / "load_cell.png"
+fig.savefig(png_path, dpi=150)
+print(f"Saved graph to {png_path}")
 plt.show()
