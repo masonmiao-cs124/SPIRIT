@@ -1,3 +1,22 @@
+"""Builds a browser page for a DAQ script: live analog-input values and switches for the
+digital-output valves.
+
+Per task, SpiritGui keeps one list of values.
+Analog-input values arrive from the DAQ script's read/data_acquisition threads through update_ai_task_values().
+Digital-output values go to the DAQ with _update_do_channel_value() when a switch is flipped.
+
+A DAQ script uses SpiritGui in this order:
+    gui = SpiritGui()                       # one per program (ui.run() serves one page)
+    gui.add_ai_task(task, units)            # after the task is initialized in the DAQ script
+    gui.add_do_task(task, start_states)     # after the task is initialized in the DAQ script
+        Note: The DAQ script using SpiritGui should write to the DAQ the start-state/
+        initial values itself, as usual. For digital output tasks tracked by
+        SpiritGui, the DAQ script should write nothing else to them afterwards.
+    gui.start()                             # opens the page in a browser tab; returns at Ctrl+C
+with one read/data_acquisition thread per analog-input task calling gui.update_ai_task_values().
+
+Refer to thermocouple2channel_valve4channel.py for an example DAQ script.
+"""
 from dataclasses import dataclass, field
 import threading
 from nicegui import ui
@@ -7,9 +26,9 @@ import nidaqmx
 @dataclass
 class _AiTask:
     channel_names: list[str]
-    units: list[str]
     values: list[float | None]    # None until the first samples arrive
-    lock: threading.Lock = field(default_factory=threading.Lock)
+    units: list[str]
+    lock: threading.Lock = field(default_factory=threading.Lock)    # Needed for values: set by the DAQ thread, read by the page timer
 
 
 @dataclass
@@ -29,20 +48,42 @@ class SpiritGui:
 
     # ----------------------------------------- what the DAQ script using SpiritGui calls
     def add_ai_task(self, task: nidaqmx.Task, units: list[str]) -> None:
+        """Shows the task's channels' values live.
+
+        Args:
+            task::nidaqmx.Task
+                The analog-input task, with its channels already added (in the DAQ script). SpiritGui uses its virtual channel names.
+            units::list[str]
+                One per channel
+        """
         self._ai_task_data[task.name] = _AiTask(
             channel_names=task.ai_channels.channel_names,
+            values=[None]*task.number_of_channels,
             units=units,
-            values=[None]*task.number_of_channels
         )
 
-    # only accepting one sample per channel
     def update_ai_task_values(self, task_name: str, values: list[float]) -> None:
+        """Takes one sample (per channel) of a task. Called from the DAQ script's read/data_acquisition thread.
+
+        Args:
+            task_name::str
+                task.name of a task given to add_ai_task().
+            values::list[float]
+                One value per channel
+        """
         with self._ai_task_data[task_name].lock:
             self._ai_task_data[task_name].values = values
 
-    # The DAQ script using SpiritGui should write to the DAQ the start-state/initial values itself, as usual.
-    # For digital output tasks tracked by SpiritGui, the DAQ script should write nothing else to them afterwards, since the DAQ writes happen when the GUI's valve_switches are flipped.
     def add_do_task(self, task: nidaqmx.Task, start_state_values: list[bool]) -> None:
+        """Shows the task's channels as switches.
+
+        Args:
+            task::nidaqmx.Task
+                The digital-output task, with its channels/lines already added and the start states already written (in the DAQ script). SpiritGui uses its virtual channel/line names as its switch labels.
+            start_state_values::list[bool]
+                One True/False (Open/Closed) state per channel/line.
+                The list the DAQ script used to initialize the task.
+        """
         self._do_task_data[task.name] = _DoTask(
             task=task,
             channel_names=task.do_channels.channel_names,
@@ -50,10 +91,12 @@ class SpiritGui:
         )
 
     def start(self) -> None:
+        """Serves the page and opens it in a browser tab; returns at Ctrl+C."""
         ui.run(title="SPIRIT", root=self._build_page, reload=False)
 
     # -------------------------------------- internal: for the browser page
     def _build_page(self) -> None:
+        """Builds the page: one row per analog-input channel, one switch per digital-output channel/line, and a timer that keeps the tabs updated with the values stored in SpiritGui."""
         sensor_data_labels: dict[str, ui.label] = {}
         for ai_task in self._ai_task_data.values():
             for channel_name, units in zip(ai_task.channel_names, ai_task.units):
@@ -85,14 +128,23 @@ class SpiritGui:
                     )
 
             for do_task in self._do_task_data.values():
-                # Update every opened tab (with digital output changes)
+                # Update every opened tab (with updated digital output values)
                 for channel_name, current_value in zip(do_task.channel_names, do_task.values):
                     valve_switches[channel_name].value = current_value
 
         ui.timer(self.REFRESH_INTERVAL_S, refresh_gui)
 
-    # Called from the switch handler
     def _update_do_channel_value(self, do_task: _DoTask, task_idx: int, is_open: bool) -> None:
+        """Switch handler: writes to the DAQ when a switch changed its channel/line's state/value.
+
+        Args:
+            do_task::_DoTask
+                The task the switch belongs to.
+            task_idx::int
+                The switch's channel/line's position in the task.
+            is_open::bool
+                The switch's new value (True = open, False = closed)
+        """
         if do_task.values[task_idx] != is_open:
             do_task.values[task_idx] = is_open
             do_task.task.write(do_task.values)
