@@ -15,7 +15,7 @@ A DAQ script uses SpiritGui in this order:
     gui.start()                             # opens the page in a browser tab; returns at Ctrl+C
 with one read/data_acquisition thread per analog-input task calling gui.update_ai_task_values().
 
-Refer to thermocouple2channel_valve4channel.py for an example DAQ script.
+Refer to example_tc_ai_valve_do.py for an example DAQ script.
 """
 from dataclasses import dataclass, field
 import threading
