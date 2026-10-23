@@ -13,9 +13,10 @@ class _AiTask:
 
 
 @dataclass
-class _DoChannel:
-    task_name: str
-    task_idx: int
+class _DoTask:
+    task: nidaqmx.Task  # written to when one of its switches is flipped
+    channel_names: list[str]
+    values: list[bool]
 
 
 class SpiritGui:
@@ -24,10 +25,7 @@ class SpiritGui:
 
     def __init__(self) -> None:
         self._ai_task_data: dict[str, _AiTask] = {}
-
-        self._do_tasks: dict[str, nidaqmx.Task] = {}
-        self._do_task_values: dict[str, list[bool]] = {}
-        self._do_channel_data: dict[str, _DoChannel] = {}
+        self._do_task_data: dict[str, _DoTask] = {}
 
     # ----------------------------------------- what the DAQ script using SpiritGui calls
     def add_ai_task(self, task: nidaqmx.Task, units: list[str]) -> None:
@@ -45,14 +43,11 @@ class SpiritGui:
     # The DAQ script using SpiritGui should write to the DAQ the start-state/initial values itself, as usual.
     # For digital output tasks tracked by SpiritGui, the DAQ script should write nothing else to them afterwards, since the DAQ writes happen when the GUI's valve_switches are flipped.
     def add_do_task(self, task: nidaqmx.Task, start_state_values: list[bool]) -> None:
-        self._do_tasks[task.name] = task
-        self._do_task_values[task.name] = start_state_values
-
-        for idx, channel_name in enumerate(task.do_channels.channel_names):
-            self._do_channel_data[channel_name] = _DoChannel(
-                task_name=task.name,
-                task_idx=idx,
-            )
+        self._do_task_data[task.name] = _DoTask(
+            task=task,
+            channel_names=task.do_channels.channel_names,
+            values=start_state_values,
+        )
 
     def start(self) -> None:
         ui.run(title="SPIRIT", root=self._build_page, reload=False)
@@ -68,14 +63,15 @@ class SpiritGui:
                     ui.label(units)
 
         valve_switches: dict[str, ui.switch] = {}
-        for channel_name, data in self._do_channel_data.items():
-            valve_switches[channel_name] = ui.switch(
-                channel_name,
-                value=self._do_task_values[data.task_name][data.task_idx],
-                on_change=lambda e, name=channel_name: self._update_do_channel_value(
-                    name, e.value
-                ),
-            )
+        for do_task in self._do_task_data.values():
+            for task_idx, (channel_name, value) in enumerate(zip(do_task.channel_names, do_task.values)):
+                valve_switches[channel_name] = ui.switch(
+                    channel_name,
+                    value=value,
+                    on_change=lambda e, do_task=do_task, task_idx=task_idx: self._update_do_channel_value(
+                        do_task, task_idx, e.value
+                    ),
+                )
 
         def refresh_gui() -> None:    # Timer callback
             for ai_task in self._ai_task_data.values():
@@ -88,19 +84,15 @@ class SpiritGui:
                         else self.VALUE_FORMAT.format(current_value)
                     )
 
-            for channel_name, switch in valve_switches.items():
+            for do_task in self._do_task_data.values():
                 # Update every opened tab (with digital output changes)
-                task_name = self._do_channel_data[channel_name].task_name
-                task_idx = self._do_channel_data[channel_name].task_idx
-                switch.value = self._do_task_values[task_name][task_idx]
+                for channel_name, current_value in zip(do_task.channel_names, do_task.values):
+                    valve_switches[channel_name].value = current_value
 
         ui.timer(self.REFRESH_INTERVAL_S, refresh_gui)
 
     # Called from the switch handler
-    def _update_do_channel_value(self, channel_name: str, is_open: bool) -> None:
-        task_name = self._do_channel_data[channel_name].task_name
-        task_idx = self._do_channel_data[channel_name].task_idx
-
-        if self._do_task_values[task_name][task_idx] != is_open:
-            self._do_task_values[task_name][task_idx] = is_open
-            self._do_tasks[task_name].write(self._do_task_values[task_name])
+    def _update_do_channel_value(self, do_task: _DoTask, task_idx: int, is_open: bool) -> None:
+        if do_task.values[task_idx] != is_open:
+            do_task.values[task_idx] = is_open
+            do_task.task.write(do_task.values)
