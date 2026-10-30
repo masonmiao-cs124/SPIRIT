@@ -1,0 +1,85 @@
+# SPIRIT DAQ configuration.
+# Read at start: restart the program after editing.
+# PLACEHOLDER marks a stand-in value; replace it when the real one is known.
+
+# ---------------------------------------------------------------- modules
+# device: NI-DAQmx name, set by the chassis slot (see NI MAX).
+# rate_hz: samples per second per channel.
+
+[module.ni9213]                 # thermocouple input, 16 channels
+device = "cDAQ1Mod1"            # slot 1
+rate_hz = 10
+
+# Note for differential channels: ai0-ai7 are paired with ai8-ai15, ai16-ai23 are paired with ai24-ai31.
+[module.ni9205]                 # analog voltage input, 32 terminals (or 16 differential channels)
+device = "cDAQ1Mod4"            # slot 4
+rate_hz = 1000
+
+[module.ni9476]                 # digital output, 32 lines
+device = "cDAQ1Mod2"            # slot 2
+
+# ---------------------------------------------------------------- sensor models
+# calibration: [volts, units] at two points; readings follow the straight line through them.
+
+[model.tl0024]                  # PerfectPrime TL0024 thermocouple
+tc_type = "T"
+units = "degC"
+
+[model.lc103b_3k]               # Omega LC103B-3K load cell
+terminal = "differential"       # wires: red supply +, black supply -, green signal +, white signal -
+range_v = [-0.2, 0.2]
+units = "lbf"
+calibration = [[0.0, 0.0], [0.030, 3000.0]]     # 3 mV/V at the team's measured 10.0 V excitation
+
+[model.px309_3kg10v]            # Omega PX309-3KG10V pressure transducer
+terminal = "differential"       # wires: red supply +, black supply -, white signal +; black doubles as signal -
+range_v = [-10.0, 10.0]
+units = "psig"
+calibration = [[0.0, 0.0], [10.0, 3000.0]]
+
+[model.fm_unknown]              # PLACEHOLDER: part, output type, units and range unknown
+terminal = "differential"
+range_v = [-5.0, 5.0]
+units = "L/min"
+calibration = [[0.0, 0.0], [5.0, 100.0]]
+
+# ---------------------------------------------------------------- sensors
+
+[sensor]                        # PLACEHOLDER names and channels
+tc_01 = { model = "tl0024", module = "ni9213", channel = "ai0" }
+tc_02 = { model = "tl0024", module = "ni9213", channel = "ai1" }
+tc_03 = { model = "tl0024", module = "ni9213", channel = "ai2" }
+tc_04 = { model = "tl0024", module = "ni9213", channel = "ai3" }
+tc_05 = { model = "tl0024", module = "ni9213", channel = "ai4" }
+tc_06 = { model = "tl0024", module = "ni9213", channel = "ai5" }
+lc_thrust = { model = "lc103b_3k", module = "ni9205", channel = "ai1" }
+pt_01 = { model = "px309_3kg10v", module = "ni9205", channel = "ai0" }
+pt_02 = { model = "px309_3kg10v", module = "ni9205", channel = "ai2" }
+pt_03 = { model = "px309_3kg10v", module = "ni9205", channel = "ai3" }
+pt_04 = { model = "px309_3kg10v", module = "ni9205", channel = "ai4" }
+pt_05 = { model = "px309_3kg10v", module = "ni9205", channel = "ai5" }
+pt_06 = { model = "px309_3kg10v", module = "ni9205", channel = "ai6" }
+pt_07 = { model = "px309_3kg10v", module = "ni9205", channel = "ai7" }
+pt_08 = { model = "px309_3kg10v", module = "ni9205", channel = "ai16" }
+pt_09 = { model = "px309_3kg10v", module = "ni9205", channel = "ai17" }
+pt_10 = { model = "px309_3kg10v", module = "ni9205", channel = "ai18" }
+pt_11 = { model = "px309_3kg10v", module = "ni9205", channel = "ai19" }
+pt_12 = { model = "px309_3kg10v", module = "ni9205", channel = "ai20" }
+fm_01 = { model = "fm_unknown", module = "ni9205", channel = "ai21" }
+fm_02 = { model = "fm_unknown", module = "ni9205", channel = "ai22" }
+
+# ---------------------------------------------------------------- valves
+# normally: state with the relay unpowered (valve datasheet).
+# safe_state: commanded at start, stop, any error and ALL SAFE.
+
+[valve]                         # PLACEHOLDER names, lines and states; vents will be normally and safe_state "open"
+sv_01 = { module = "ni9476", line = "port0/line0", normally = "closed", safe_state = "closed" }
+sv_02 = { module = "ni9476", line = "port0/line1", normally = "closed", safe_state = "closed" }
+sv_03 = { module = "ni9476", line = "port0/line2", normally = "closed", safe_state = "closed" }
+sv_04 = { module = "ni9476", line = "port0/line3", normally = "closed", safe_state = "closed" }
+sv_05 = { module = "ni9476", line = "port0/line4", normally = "closed", safe_state = "closed" }
+sv_06 = { module = "ni9476", line = "port0/line5", normally = "closed", safe_state = "closed" }
+sv_07 = { module = "ni9476", line = "port0/line6", normally = "closed", safe_state = "closed" }
+sv_08 = { module = "ni9476", line = "port0/line7", normally = "closed", safe_state = "closed" }
+sv_09 = { module = "ni9476", line = "port0/line8", normally = "closed", safe_state = "closed" }
+sv_10 = { module = "ni9476", line = "port0/line9", normally = "closed", safe_state = "closed" }
